@@ -323,3 +323,5 @@ Distribution/
 # "Angular" Ausgaben
 Fbi.WebApp/wwwroot/
 Fbi.WebApp/tempUpload/
+
+agent_docs/

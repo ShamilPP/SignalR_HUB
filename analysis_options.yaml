@@ -1,0 +1,21 @@
+include: package:lints/recommended.yaml
+
+linter:
+  rules:
+    - avoid_print
+    - cancel_subscriptions
+    - close_sinks
+    - prefer_final_locals
+    - prefer_is_empty
+    - prefer_is_not_empty
+    - unnecessary_new
+    - unnecessary_this
+
+analyzer:
+  errors:
+    unused_local_variable: warning
+    unused_element: warning
+    dead_code: warning
+  exclude:
+    - "testapp/**"
+    - "example/**"
