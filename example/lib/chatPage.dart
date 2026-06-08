@@ -1,3 +1,4 @@
+// ignore_for_file: file_names
 import 'main.dart';
 import 'utils/viewModel/viewModelPropertyWidgetBuilder.dart';
 import 'chatPageViewModel.dart';
@@ -12,7 +13,7 @@ class ChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = new ChatPageViewModel();
+    final vm = ChatPageViewModel();
     return ChatPageViewModelProvider(
         viewModel: vm,
         childBuilder: (ctx) {

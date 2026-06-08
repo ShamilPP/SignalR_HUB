@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import "package:message_pack_dart/message_pack_dart.dart" as msgpack;

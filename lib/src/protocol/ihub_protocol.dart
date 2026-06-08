@@ -1,3 +1,4 @@
+// ignore_for_file: constant_identifier_names
 import 'dart:collection';
 
 import 'package:logging/logging.dart';
@@ -104,7 +105,7 @@ abstract class HubMessageBase {
   final MessageType type;
 
   // Methods
-  HubMessageBase(MessageType type) : type = type;
+  HubMessageBase(this.type);
 }
 
 /// Defines properties common to all Hub messages relating to a specific invocation.
@@ -121,9 +122,8 @@ abstract class HubInvocationMessage extends HubMessageBase {
 
   // Methods
   HubInvocationMessage(
-      super.messageType, MessageHeaders? headers, String? invocationId)
-      : headers = headers ?? MessageHeaders(),
-        invocationId = invocationId;
+      super.messageType, MessageHeaders? headers, this.invocationId)
+      : headers = headers ?? MessageHeaders();
 }
 
 /// A hub message representing a non-streaming invocation.
@@ -141,15 +141,12 @@ class InvocationMessage extends HubInvocationMessage {
 
   // Methods
   InvocationMessage(
-      {String? target,
-      List<Object?>? arguments,
-      List<String>? streamIds,
+      {this.target,
+      this.arguments,
+      this.streamIds,
       MessageHeaders? headers,
       String? invocationId})
-      : target = target,
-        arguments = arguments,
-        streamIds = streamIds,
-        super(MessageType.invocation, headers, invocationId);
+      : super(MessageType.invocation, headers, invocationId);
   @override
   String toString() {
     return 'InvocationMessage - type: ${type.index}, headers: ${headers.toString()}, invocationId: $invocationId, target: $target, arguments: $arguments, streamIds: $streamIds';
@@ -171,15 +168,12 @@ class StreamInvocationMessage extends HubInvocationMessage {
 
   // Methods
   StreamInvocationMessage(
-      {String? target,
-      List<Object?>? arguments,
-      List<String>? streamIds,
+      {this.target,
+      this.arguments,
+      this.streamIds,
       MessageHeaders? headers,
       String? invocationId})
-      : target = target,
-        arguments = arguments,
-        streamIds = streamIds,
-        super(MessageType.streamInvocation, headers, invocationId);
+      : super(MessageType.streamInvocation, headers, invocationId);
 
   @override
   String toString() {
@@ -196,9 +190,8 @@ class StreamItemMessage extends HubInvocationMessage {
 
   // Methods
   StreamItemMessage(
-      {Object? item, MessageHeaders? headers, String? invocationId})
-      : item = item,
-        super(MessageType.streamItem, headers, invocationId);
+      {this.item, MessageHeaders? headers, String? invocationId})
+      : super(MessageType.streamItem, headers, invocationId);
 
   @override
   String toString() {
@@ -222,13 +215,11 @@ class CompletionMessage extends HubInvocationMessage {
 
   // Methods
   CompletionMessage(
-      {String? error,
-      Object? result,
+      {this.error,
+      this.result,
       MessageHeaders? headers,
       String? invocationId})
-      : error = error,
-        result = result,
-        super(MessageType.completion, headers, invocationId);
+      : super(MessageType.completion, headers, invocationId);
   @override
   String toString() {
     return 'CompletionMessage - type: ${type.index}, headers: ${headers.toString()}, invocationId: $invocationId, error: $error, result: $result';
@@ -262,10 +253,8 @@ class CloseMessage extends HubMessageBase {
   final bool? allowReconnect;
 
   //Methods
-  CloseMessage({String? error, bool? allowReconnect})
-      : error = error,
-        allowReconnect = allowReconnect,
-        super(MessageType.close);
+  CloseMessage({this.error, this.allowReconnect})
+      : super(MessageType.close);
 
   @override
   String toString() {
@@ -299,10 +288,8 @@ abstract class IHubProtocol {
   final TransferFormat transferFormat;
 
   // Methods
-  IHubProtocol(String name, int number, TransferFormat transferFormat)
-      : name = name,
-        version = number,
-        transferFormat = transferFormat;
+  IHubProtocol(this.name, int number, this.transferFormat)
+      : version = number;
 
   /// Creates an array of {@link @microsoft/signalr.HubMessage} objects from the specified serialized representation.
   ///

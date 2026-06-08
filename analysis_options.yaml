@@ -18,4 +18,3 @@ analyzer:
     dead_code: warning
   exclude:
     - "testapp/**"
-    - "example/**"

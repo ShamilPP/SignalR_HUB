@@ -1,3 +1,4 @@
+// ignore_for_file: file_names
 import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:quiver/strings.dart';
@@ -14,7 +15,7 @@ class PropertyChangedEvent {
   const PropertyChangedEvent(this.sender, this.propertyName);
 }
 
-typedef void SetValue<TValue>(TValue value);
+typedef SetValue<TValue> = void Function(TValue value);
 
 abstract class ViewModel {
   // Properties
@@ -49,12 +50,12 @@ abstract class ViewModel {
 
   Stream<PropertyChangedEvent> whenPropertiesChanged(
       List<String>? propertyNames) {
-    assert(propertyNames != null || propertyNames!.length != 0);
+    assert(propertyNames != null || propertyNames!.isNotEmpty);
 
     return propertyChanges
         .where((event) =>
             isBlank(event.propertyName) ||
-            propertyNames!.indexOf(event.propertyName) != -1)
+            propertyNames!.contains(event.propertyName))
         .transform(StreamTransformer.fromHandlers(handleData:
             (PropertyChangedEvent value, EventSink<PropertyChangedEvent> sink) {
       sink.add(value);
@@ -62,12 +63,12 @@ abstract class ViewModel {
   }
 
   Stream<void> whenPropertiesChangedHint(List<String>? propertyNames) {
-    assert(propertyNames != null || propertyNames!.length != 0);
+    assert(propertyNames != null || propertyNames!.isNotEmpty);
 
     return propertyChanges
         .where((event) =>
             isBlank(event.propertyName) ||
-            propertyNames!.indexOf(event.propertyName) != -1)
+            propertyNames!.contains(event.propertyName))
         .transform(StreamTransformer.fromHandlers(
             handleData: (PropertyChangedEvent value, EventSink<void> sink) {
       sink.add(null);

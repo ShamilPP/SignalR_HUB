@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+// ignore_for_file: file_names
 import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart';
@@ -51,7 +53,7 @@ class ChatPageViewModel extends ViewModel {
 // Methods
 
   ChatPageViewModel() {
-    _serverUrl = kChatServerUrl + "/Chat";
+    _serverUrl = "$kChatServerUrl/Chat";
     _chatMessages = [];
     _connectionIsOpen = false;
     _userName = "Fred";
@@ -81,7 +83,7 @@ class ChatPageViewModel extends ViewModel {
     final logger = _logger;
 
     if (_hubConnection == null) {
-      final httpConnectionOptions = new HttpConnectionOptions(
+      final httpConnectionOptions = HttpConnectionOptions(
           httpClient: WebSupportingHttpClient(logger,
               httpClientCreateCallback: _httpClientCreateCallback),
           logger: logger,
@@ -111,7 +113,7 @@ class ChatPageViewModel extends ViewModel {
   }
 
   Future<void> sendChatMessage(String? chatMessage) async {
-    if (chatMessage == null || chatMessage.length == 0) {
+    if (chatMessage == null || chatMessage.isEmpty) {
       return;
     }
     await openChatConnection();
