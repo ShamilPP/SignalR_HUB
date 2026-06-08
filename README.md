@@ -1,4 +1,4 @@
-# signalr_client
+# signalr_hub
 
 [![pub package](https://img.shields.io/pub/v/signalr_hub.svg)](https://pub.dartlang.org/packages/signalr_hub)
 
@@ -22,8 +22,8 @@ The client supports the following hub protocols:
 
 ## Examples
 
-- [Chat client/server](https://github.com/sefidgaran/signalr_client/tree/master/example) - A simple client/server chat application.
-- [Integration test app](https://github.com/sefidgaran/signalr_client/tree/master/testapp/client) - To see how a client calls various types of hub functions.
+- [Chat client/server](https://github.com/ShamilPP/SignalR_HUB/tree/main/example) - A simple client/server chat application.
+- [Integration test app](https://github.com/ShamilPP/SignalR_HUB/tree/main/testapp/client) - To see how a client calls various types of hub functions.
 
 ## Getting Started
 
@@ -40,7 +40,7 @@ dependencies:
 ...
 ```
 
-Important Note: if you are experiencing issues (for example not receiving message callback) with the latest version, please give a try to older version as signalr_hub: 0.1.7+2-nullsafety.3 but bear in mind that this version does not support auto reconnect functionalities and need to be handled manually.
+Important Note: This is the official modernized version of `signalr_client` rebuilt for modern Flutter environments. It enforces strict type safety and guarantees auto-reconnect stability.
 
 ## Usage
 
@@ -57,7 +57,7 @@ final serverUrl = "192.168.10.50:51001";
 // Creates the connection by using the HubConnectionBuilder.
 final hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
 // When the connection is closed, print out a message to the console.
-final hubConnection.onclose( (error) => print("Connection Closed"));
+hubConnection.onclose( (error) => print("Connection Closed"));
 
 ```
 
@@ -95,7 +95,7 @@ final httpOptions = new HttpConnectionOptions(logger: transportProtLogger);
 // Creates the connection by using the HubConnectionBuilder.
 final hubConnection = HubConnectionBuilder().withUrl(serverUrl, options: httpOptions).configureLogging(hubProtLogger).build();
 // When the connection is closed, print out a message to the console.
-final hubConnection.onclose( (error) => print("Connection Closed"));
+hubConnection.onclose( (error) => print("Connection Closed"));
 
 ```
 
