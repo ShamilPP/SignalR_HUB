@@ -180,7 +180,7 @@ class HubConnection {
     }
   }
 
-  _startInternal() async {
+  Future<void> _startInternal() async {
     _stopDuringStartError = null;
     _receivedHandshakeResponse = false;
     // Set up the promise before any connection is (re)started otherwise it could race with received messages
@@ -746,7 +746,7 @@ class HubConnection {
     // 3. The Disconnected state in which case we're already done.
   }
 
-  _completeClose({Object? error}) {
+  void _completeClose({Object? error}) {
     if (_connectionStarted) {
       _connectionState = HubConnectionState.disconnected;
       _connectionStarted = false;
@@ -762,7 +762,7 @@ class HubConnection {
     }
   }
 
-  _reconnect({Object? error}) async {
+  Future<void> _reconnect({Object? error}) async {
     final reconnectStartTime = DateTime.now();
     var previousReconnectAttempts = 0;
     Object retryError = error ??
@@ -871,7 +871,7 @@ class HubConnection {
     }
   }
 
-  _cancelCallbacksWithError(Object error) {
+  void _cancelCallbacksWithError(Object error) {
     final Map<String?, void Function(HubMessageBase?, Object)> callbacks =
         _callbacks;
     _callbacks = {};
@@ -879,12 +879,12 @@ class HubConnection {
     callbacks.forEach((_, value) => value(null, error));
   }
 
-  _cancelAllTimers() {
+  void _cancelAllTimers() {
     _cleanupTimeout();
     _cleanupPingTimer();
   }
 
-  _cancelStreamSubscriptions() {
+  void _cancelStreamSubscriptions() {
     for (final sub in _streamSubscriptions) {
       sub.cancel();
     }
@@ -929,7 +929,7 @@ class HubConnection {
     }
   }
 
-  _launchStreams(
+  void _launchStreams(
       Map<String, Stream<Object>> streams, Future<void>? promiseQueue) {
     if (streams.isEmpty) {
       return;

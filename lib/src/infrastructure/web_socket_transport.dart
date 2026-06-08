@@ -1,9 +1,11 @@
 import 'dart:async';
-import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
-import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import 'web_socket_channel_stub.dart'
+    if (dart.library.js_interop) 'web_socket_channel_web.dart'
+    if (dart.library.io) 'web_socket_channel_io.dart';
 
 import '../core/signalr_exception.dart';
 import '../core/itransport.dart';
@@ -81,12 +83,8 @@ class WebSocketTransport implements ITransport {
       final uri = Uri.parse(wsUrl);
       if (_webSocketChannelFactory != null) {
         channel = await _webSocketChannelFactory!(uri, headers);
-      } else if (kIsWeb) {
-        channel = WebSocketChannel.connect(uri);
       } else {
-        // ignore: close_sinks — closed via IOWebSocketChannel in _closeInternal()
-        final webSocket = await io.WebSocket.connect(wsUrl, headers: headers);
-        channel = IOWebSocketChannel(webSocket);
+        channel = await connectWebSocket(uri, headers);
       }
 
       await channel.ready;
