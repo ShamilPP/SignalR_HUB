@@ -1,6 +1,6 @@
 name: signalr_hub
 description: A maintained Flutter client for ASP.NET Core SignalR with null-arg support, reconnection stability, and critical crash fixes.
-version: 2.0.0
+version: 2.0.1
 homepage: https://github.com/ShamilPP/SignalR_HUB
 repository: https://github.com/ShamilPP/SignalR_HUB
 issue_tracker: https://github.com/ShamilPP/SignalR_HUB/issues
