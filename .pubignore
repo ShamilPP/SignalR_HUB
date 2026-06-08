@@ -1,1 +1,9 @@
 testapp/
+build/
+coverage/
+.dart_tool/
+.idea/
+.vscode/
+*.iml
+*.log
+agent_docs/
