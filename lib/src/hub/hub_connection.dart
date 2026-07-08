@@ -544,7 +544,7 @@ class HubConnection {
         _logger.finest("Handle message of type '${message.type}'.");
         switch (message.type) {
           case MessageType.invocation:
-            _invokeClientMethod(message as InvocationMessage);
+            unawaited(_invokeClientMethod(message as InvocationMessage));
             break;
           case MessageType.streamItem:
           case MessageType.completion:
@@ -678,30 +678,61 @@ class HubConnection {
     }
   }
 
-  void _invokeClientMethod(InvocationMessage invocationMessage) {
+  Future<void> _invokeClientMethod(InvocationMessage invocationMessage) async {
     final target = invocationMessage.target;
     if (target == null) {
       _logger.warning('Invocation received with null target.');
       return;
     }
+
     final methods = _methods[target.toLowerCase()];
     if (methods != null) {
-      for (var m in methods) {
-        m(invocationMessage.arguments);
-      }
-      if (!isStringEmpty(invocationMessage.invocationId)) {
-        // This is not supported in v1. So we return an error to avoid blocking the server waiting for the response.
-        final message =
-            "Server requested a response, which is not supported in this version of the client.";
-        _logger.severe(message);
+      try {
+        final results = <Object?>[];
+        for (final method in methods) {
+          final result = method(invocationMessage.arguments);
+          if (result is Future) {
+            results.add(await result);
+          } else {
+            results.add(result);
+          }
+        }
 
-        // We don't need to wait on this Promise.
-        _stopPromise = _stopInternal(
-            error: SignalRException(
-                message: message, type: SignalRExceptionType.signalr));
+        if (!isStringEmpty(invocationMessage.invocationId)) {
+          Object? result;
+          if (results.isNotEmpty) {
+            result = results.first;
+          }
+
+          final message = CompletionMessage(
+            invocationId: invocationMessage.invocationId,
+            result: result,
+          );
+          await _sendMessage(message);
+        }
+      } catch (e) {
+        _logger.severe('A client method threw an exception: $e');
+        if (!isStringEmpty(invocationMessage.invocationId)) {
+          final message = CompletionMessage(
+            invocationId: invocationMessage.invocationId,
+            error: e.toString(),
+          );
+          await _sendMessage(message);
+        }
       }
     } else {
       _logger.warning("No client method with the name '$target' found.");
+      if (!isStringEmpty(invocationMessage.invocationId)) {
+        final message = CompletionMessage(
+          invocationId: invocationMessage.invocationId,
+          error: "Client method '$target' not found.",
+        );
+        try {
+          await _sendMessage(message);
+        } catch (e) {
+          _logger.severe('Failed to send CompletionMessage: $e');
+        }
+      }
     }
   }
 

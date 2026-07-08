@@ -123,6 +123,27 @@ void main() {
       expect(received.first, ['hello', 42]);
     });
 
+    test('sends a completion message when a client method returns a result',
+        () async {
+      final hub = await startConnectedHub();
+
+      hub.on('TestMethod', (args) async {
+        await Future.delayed(Duration.zero);
+        return 'client result';
+      });
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"42","arguments":[]}\u001e');
+
+      await Future.delayed(Duration(milliseconds: 10));
+
+      expect(fakeConnection.sentMessages.last, isA<CompletionMessage>());
+      final completion = fakeConnection.sentMessages.last as CompletionMessage;
+      expect(completion.invocationId, '42');
+      expect(completion.result, 'client result');
+      expect(completion.error, isNull);
+    });
+
     test('method name is case-insensitive', () async {
       final hub = await startConnectedHub();
 
