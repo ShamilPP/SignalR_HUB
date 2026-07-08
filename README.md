@@ -46,7 +46,7 @@ Important Note: This is the official modernized version of `signalr_client` rebu
 
 Let's demo some basic usages:
 
-#### 1. Create a hub connection:
+#### 1. Create a hub connection
 
 ```dart
 // Import the library.
@@ -99,7 +99,7 @@ hubConnection.onclose( (error) => print("Connection Closed"));
 
 ```
 
-#### 2. Connect to a Hub:
+#### 2. Connect to a Hub
 
 Calling following method starts handshaking and connects the client to SignalR server
 
@@ -107,7 +107,7 @@ Calling following method starts handshaking and connects the client to SignalR s
 await hubConnection.start();
 ```
 
-#### 3. Calling a Hub function:
+#### 3. Calling a Hub function
 
 Assuming there is this hub function:
 
@@ -128,7 +128,7 @@ The client can invoke the function by using:
 
 ```
 
-#### 4. Calling a client function:
+#### 4. Calling a client function
 
 Assuming the server calls a function "aClientProvidedFunction":
 
