@@ -46,7 +46,7 @@ Important Note: This is the official modernized version of `signalr_client` rebu
 
 Let's demo some basic usages:
 
-#### 1. Create a hub connection:
+#### 1. Create a hub connection
 
 ```dart
 // Import the library.
@@ -99,7 +99,7 @@ hubConnection.onclose( (error) => print("Connection Closed"));
 
 ```
 
-#### 2. Connect to a Hub:
+#### 2. Connect to a Hub
 
 Calling following method starts handshaking and connects the client to SignalR server
 
@@ -107,7 +107,7 @@ Calling following method starts handshaking and connects the client to SignalR s
 await hubConnection.start();
 ```
 
-#### 3. Calling a Hub function:
+#### 3. Calling a Hub function
 
 Assuming there is this hub function:
 
@@ -128,7 +128,7 @@ The client can invoke the function by using:
 
 ```
 
-#### 4. Calling a client function:
+#### 4. Calling a client function
 
 Assuming the server calls a function "aClientProvidedFunction":
 
@@ -152,6 +152,15 @@ The Client provides the function like this:
     logger.log(LogLevel.Information, "Server invoked the method");
   }
 
+```
+
+Client handlers can also return a result back to the server. If the server uses `InvokeAsync` (which expects a response), a handler may return a value or an async `Future`:
+
+```dart
+hubConnection.on("aClientProvidedFunctionWithResult", (parameters) async {
+  await Future.delayed(Duration(seconds: 1));
+  return "This is the result from the client!";
+});
 ```
 
 #### 5. Using Msgpack for serialization
@@ -239,7 +248,7 @@ final _hubConnection = HubConnectionBuilder()
 
 Http Request Log:
 
-```
+```text
 I/flutter ( 5248): Starting connection with transfer format 'TransferFormat.text'.
 I/flutter ( 5248): Sending negotiation request: https://localhost:5000/negotiate?negotiateVersion=1
 I/flutter ( 5248): HTTP send: url 'https://localhost:5000/negotiate?negotiateVersion=1', method: 'POST' content: '' content length = '0'

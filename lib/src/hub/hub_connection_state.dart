@@ -45,7 +45,7 @@ typedef InvocationEventCallback = void Function(
   HubMessageBase? invocationEvent,
   Object? error,
 );
-typedef MethodInvocationFunc = void Function(List<Object?>? arguments);
+typedef MethodInvocationFunc = dynamic Function(List<Object?>? arguments);
 typedef ClosedCallback = void Function({Object? error});
 typedef ReconnectingCallback = void Function({Object? error});
 typedef ReconnectedCallback = void Function({String? connectionId});
