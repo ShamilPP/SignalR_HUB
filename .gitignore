@@ -7,6 +7,14 @@
 .dart_tool/
 .pub/
 
+# Flutter tool output. These embed absolute paths from whichever machine ran
+# `flutter build`, so tracking them causes a conflict on every contributor PR.
+**/Flutter/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/android/local.properties
+.flutter-plugins-dependencies
+
 build/
 ios/.generated/
 packages

@@ -1,6 +1,12 @@
-## [2.0.3]
+## [2.1.0]
 
-* **Client Results Support:** Added support for client handlers that return values or `Future` results back to the server when the server invokes them with a request for a response.
+* **Client Results Support (upstream issue #118):** A client handler registered with `on()` can now return a value — or a `Future` — and it is sent back to the server as a `CompletionMessage`. This is the SignalR "client results" feature, used when the server calls `InvokeAsync<T>` on a client and awaits the answer. Previously the client logged *"not supported in this version"* and **terminated the connection** whenever the server requested a response. Thanks to [@JamesFieldist](https://github.com/JamesFieldist) for the implementation (#2).
+* **`MethodInvocationFunc` now returns `dynamic`** instead of `void`, so handlers may return a result. Existing `void` handlers keep compiling unchanged.
+* **Error results:** If a handler throws, or no handler is registered for the requested target, an error `CompletionMessage` is returned to the server so it stops waiting instead of hanging until its own timeout.
+* **Serialization fix:** Client-result completions are now written through the active hub protocol. They were previously handed to the transport as raw message objects, which every transport rejects with *"Content type is not handled."* — this made client results fail on any real connection.
+* **Multiple handlers:** When several handlers are registered for one target and the server expects a result, all handlers still run, the first one's return value answers the server, and a warning is logged instead of silently discarding the rest.
+* **Handler-list safety:** Handlers are invoked over a copy of the list, so a handler calling `on()` / `off()` for its own target no longer risks a concurrent-modification error.
+* **CI:** Added a GitHub Actions workflow running `flutter analyze` and `flutter test` on every push and pull request.
 
 ## [2.0.2]
 

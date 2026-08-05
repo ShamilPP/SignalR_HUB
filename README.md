@@ -163,6 +163,13 @@ hubConnection.on("aClientProvidedFunctionWithResult", (parameters) async {
 });
 ```
 
+A few things worth knowing about client results:
+
+- If your handler throws, the exception message is returned to the server as an error result, so the server's `InvokeAsync` fails instead of hanging until its own timeout.
+- If the server invokes a method you never registered, an error result is returned for the same reason.
+- If you register several handlers for the same method name, all of them still run, but only the first one's return value is sent to the server (a warning is logged). The server can only accept a single result.
+- Handlers registered for methods the server calls with `SendAsync` (no response expected) work exactly as before — any value they return is simply ignored.
+
 #### 5. Using Msgpack for serialization
 
 The Hub should be configured to use the msgpack protocol in both the client and server

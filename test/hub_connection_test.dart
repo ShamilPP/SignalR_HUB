@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
@@ -98,6 +99,23 @@ void main() {
     });
   });
 
+  /// Decodes the last message handed to the transport as a completion frame.
+  ///
+  /// Asserts along the way that it really was serialized by the hub protocol
+  /// (a String terminated by the record separator) rather than passed through
+  /// as a raw message object, which no transport accepts.
+  Map<String, dynamic> lastCompletion() {
+    final sent = fakeConnection.sentMessages.last;
+    expect(sent, isA<String>(),
+        reason: 'transports only accept String or Uint8List');
+    final text = sent as String;
+    expect(text, endsWith('\u001e'));
+    final decoded =
+        jsonDecode(text.substring(0, text.length - 1)) as Map<String, dynamic>;
+    expect(decoded['type'], MessageType.completion.index);
+    return decoded;
+  }
+
   Future<HubConnection> startConnectedHub() async {
     final hub = createHub();
     final startFuture = hub.start();
@@ -137,11 +155,150 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 10));
 
-      expect(fakeConnection.sentMessages.last, isA<CompletionMessage>());
-      final completion = fakeConnection.sentMessages.last as CompletionMessage;
-      expect(completion.invocationId, '42');
-      expect(completion.result, 'client result');
-      expect(completion.error, isNull);
+      final completion = lastCompletion();
+      expect(completion['invocationId'], '42');
+      expect(completion['result'], 'client result');
+      expect(completion.containsKey('error'), isFalse);
+    });
+
+    test('client result completion is serialized by the hub protocol',
+        () async {
+      // Regression: the completion used to be handed to the transport as a
+      // raw CompletionMessage object, which every real transport rejects
+      // with "Content type is not handled."
+      final hub = await startConnectedHub();
+
+      hub.on('TestMethod', (args) => 'ok');
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"7","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      final sent = fakeConnection.sentMessages.last;
+      expect(sent, isA<String>(),
+          reason: 'transports only accept String or Uint8List');
+      expect(sent as String, endsWith('\u001e'));
+    });
+
+    test('sends an error completion when a client method throws', () async {
+      final hub = await startConnectedHub();
+
+      hub.on('TestMethod', (args) => throw StateError('handler exploded'));
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"8","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      final completion = lastCompletion();
+      expect(completion['invocationId'], '8');
+      expect(completion['error'], contains('handler exploded'));
+      expect(completion.containsKey('result'), isFalse);
+    });
+
+    test('sends an error completion when a client method throws async',
+        () async {
+      final hub = await startConnectedHub();
+
+      hub.on('TestMethod', (args) async {
+        await Future.delayed(Duration.zero);
+        throw StateError('async explosion');
+      });
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"9","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      expect(lastCompletion()['error'], contains('async explosion'));
+    });
+
+    test('sends an error completion when no client method is registered',
+        () async {
+      await startConnectedHub();
+
+      fakeConnection.receive(
+          '{"type":1,"target":"Missing","invocationId":"10","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      final completion = lastCompletion();
+      expect(completion['invocationId'], '10');
+      expect(completion['error'], contains("'Missing' not found"));
+    });
+
+    test('sends a void completion when the handler returns nothing', () async {
+      final hub = await startConnectedHub();
+
+      var called = false;
+      hub.on('TestMethod', (args) {
+        called = true;
+      });
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"11","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      expect(called, isTrue);
+      final completion = lastCompletion();
+      expect(completion['invocationId'], '11');
+      expect(completion.containsKey('result'), isFalse);
+      expect(completion.containsKey('error'), isFalse);
+    });
+
+    test('with multiple handlers, the first result is sent to the server',
+        () async {
+      final hub = await startConnectedHub();
+
+      final order = <String>[];
+      hub.on('TestMethod', (args) {
+        order.add('first');
+        return 'first result';
+      });
+      hub.on('TestMethod', (args) {
+        order.add('second');
+        return 'second result';
+      });
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"12","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      // Every handler still runs; only the first one answers the server.
+      expect(order, ['first', 'second']);
+      expect(lastCompletion()['result'], 'first result');
+    });
+
+    test('does not send a completion when the server expects no response',
+        () async {
+      final hub = await startConnectedHub();
+
+      hub.on('TestMethod', (args) => 'ignored result');
+
+      // Only the handshake request has been sent so far.
+      final sentBefore = fakeConnection.sentMessages.length;
+
+      fakeConnection
+          .receive('{"type":1,"target":"TestMethod","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      // No invocationId means the server is not waiting on a result, so
+      // the handler's return value is discarded and nothing is sent back.
+      expect(fakeConnection.sentMessages.length, sentBefore);
+    });
+
+    test('a handler may unregister itself while being invoked', () async {
+      final hub = await startConnectedHub();
+
+      late MethodInvocationFunc handler;
+      handler = (args) {
+        hub.off('TestMethod', method: handler);
+        return 'done';
+      };
+      hub.on('TestMethod', handler);
+
+      fakeConnection.receive(
+          '{"type":1,"target":"TestMethod","invocationId":"13","arguments":[]}\u001e');
+      await Future.delayed(Duration(milliseconds: 10));
+
+      expect(lastCompletion()['result'], 'done');
     });
 
     test('method name is case-insensitive', () async {

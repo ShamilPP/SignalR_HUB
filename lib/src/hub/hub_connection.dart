@@ -685,54 +685,69 @@ class HubConnection {
       return;
     }
 
+    // A non-empty invocationId means the server used InvokeAsync and is
+    // blocking on a result from this client ("client results", .NET 7+).
+    final expectsResponse = !isStringEmpty(invocationMessage.invocationId);
     final methods = _methods[target.toLowerCase()];
-    if (methods != null) {
-      try {
-        final results = <Object?>[];
-        for (final method in methods) {
-          final result = method(invocationMessage.arguments);
-          if (result is Future) {
-            results.add(await result);
-          } else {
-            results.add(result);
-          }
-        }
 
-        if (!isStringEmpty(invocationMessage.invocationId)) {
-          Object? result;
-          if (results.isNotEmpty) {
-            result = results.first;
-          }
-
-          final message = CompletionMessage(
-            invocationId: invocationMessage.invocationId,
-            result: result,
-          );
-          await _sendMessage(message);
-        }
-      } catch (e) {
-        _logger.severe('A client method threw an exception: $e');
-        if (!isStringEmpty(invocationMessage.invocationId)) {
-          final message = CompletionMessage(
-            invocationId: invocationMessage.invocationId,
-            error: e.toString(),
-          );
-          await _sendMessage(message);
-        }
-      }
-    } else {
+    if (methods == null) {
       _logger.warning("No client method with the name '$target' found.");
-      if (!isStringEmpty(invocationMessage.invocationId)) {
-        final message = CompletionMessage(
+      if (expectsResponse) {
+        await _sendCompletion(CompletionMessage(
           invocationId: invocationMessage.invocationId,
           error: "Client method '$target' not found.",
-        );
-        try {
-          await _sendMessage(message);
-        } catch (e) {
-          _logger.severe('Failed to send CompletionMessage: $e');
+        ));
+      }
+      return;
+    }
+
+    // Copy: a handler may call on()/off() for the same target while running.
+    final handlers = List<MethodInvocationFunc>.from(methods);
+    if (expectsResponse && handlers.length > 1) {
+      _logger.warning(
+          "Multiple client methods are registered for '$target'. The server "
+          "expects a single result, so only the first handler's return value "
+          "is sent.");
+    }
+
+    Object? result;
+    try {
+      for (var i = 0; i < handlers.length; i++) {
+        final returned = handlers[i](invocationMessage.arguments);
+        final value = returned is Future ? await returned : returned;
+        if (i == 0) {
+          result = value;
         }
       }
+    } catch (e) {
+      _logger.severe("A client method for '$target' threw an exception: $e");
+      if (expectsResponse) {
+        await _sendCompletion(CompletionMessage(
+          invocationId: invocationMessage.invocationId,
+          error: e.toString(),
+        ));
+      }
+      return;
+    }
+
+    if (expectsResponse) {
+      await _sendCompletion(CompletionMessage(
+        invocationId: invocationMessage.invocationId,
+        result: result,
+      ));
+    }
+  }
+
+  /// Sends a client-result completion back to the server.
+  ///
+  /// Failures are logged rather than thrown: this runs from an unawaited
+  /// message-handling path, so an escaping error would surface as an
+  /// unhandled async error instead of anything the caller can act on.
+  Future<void> _sendCompletion(CompletionMessage message) async {
+    try {
+      await _sendWithProtocol(message);
+    } catch (e) {
+      _logger.severe('Failed to send CompletionMessage: $e');
     }
   }
 

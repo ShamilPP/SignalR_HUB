@@ -189,8 +189,7 @@ class StreamItemMessage extends HubInvocationMessage {
   final Object? item;
 
   // Methods
-  StreamItemMessage(
-      {this.item, MessageHeaders? headers, String? invocationId})
+  StreamItemMessage({this.item, MessageHeaders? headers, String? invocationId})
       : super(MessageType.streamItem, headers, invocationId);
 
   @override
@@ -215,10 +214,7 @@ class CompletionMessage extends HubInvocationMessage {
 
   // Methods
   CompletionMessage(
-      {this.error,
-      this.result,
-      MessageHeaders? headers,
-      String? invocationId})
+      {this.error, this.result, MessageHeaders? headers, String? invocationId})
       : super(MessageType.completion, headers, invocationId);
   @override
   String toString() {
@@ -253,8 +249,7 @@ class CloseMessage extends HubMessageBase {
   final bool? allowReconnect;
 
   //Methods
-  CloseMessage({this.error, this.allowReconnect})
-      : super(MessageType.close);
+  CloseMessage({this.error, this.allowReconnect}) : super(MessageType.close);
 
   @override
   String toString() {
@@ -288,8 +283,7 @@ abstract class IHubProtocol {
   final TransferFormat transferFormat;
 
   // Methods
-  IHubProtocol(this.name, int number, this.transferFormat)
-      : version = number;
+  IHubProtocol(this.name, int number, this.transferFormat) : version = number;
 
   /// Creates an array of {@link @microsoft/signalr.HubMessage} objects from the specified serialized representation.
   ///
